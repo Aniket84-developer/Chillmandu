@@ -1,0 +1,74 @@
+[
+  {
+    "id": 1,
+    "name": "Butter Chicken",
+    "price": 560,
+    "category": "Foods",
+    "description": "Creamy and rich butter chicken with naan",
+    "image": "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400",
+    "available": true
+  },
+  {
+    "id": 2,
+    "name": "Buff Jhol Momo",
+    "price": 270,
+    "category": "Foods",
+    "description": "Juicy buff momo in spicy jhol",
+    "image": "https://images.unsplash.com/photo-1625220194771-7ebdea0b70b9?w=400",
+    "available": true
+  },
+  {
+    "id": 3,
+    "name": "Pepperoni Pizza",
+    "price": 790,
+    "category": "Foods",
+    "description": "Classic pepperoni pizza",
+    "image": "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400",
+    "available": true
+  },
+  {
+    "id": 4,
+    "name": "Crispy Hungry Chicken",
+    "price": 370,
+    "category": "Foods",
+    "description": "Crispy fried chicken special",
+    "image": "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400",
+    "available": true
+  },
+  {
+    "id": 5,
+    "name": "Walnut Brownie",
+    "price": 290,
+    "category": "Bakery",
+    "description": "Warm chocolate walnut brownie",
+    "image": "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400",
+    "available": true
+  },
+  {
+    "id": 6,
+    "name": "Mustang Aalu",
+    "price": 290,
+    "category": "Foods",
+    "description": "Spicy Mustang style potatoes",
+    "image": "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400",
+    "available": true
+  },
+  {
+    "id": 7,
+    "name": "Chicken Biryani",
+    "price": 500,
+    "category": "Foods",
+    "description": "Fragrant chicken biryani",
+    "image": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400",
+    "available": true
+  },
+  {
+    "id": 8,
+    "name": "Cold Drink (Coke)",
+    "price": 80,
+    "category": "Drinks",
+    "description": "Chilled Coca-Cola 250ml",
+    "image": "https://images.unsplash.com/photo-1629203851122-3726ecdf080e?w=400",
+    "available": true
+  }
+]
