@@ -1,4 +1,4 @@
-// ===== Hunger End Pro – Main App Logic (Updated) =====
+// ===== Hunger End Pro – Main App Logic (Unified & Fixed) =====
 
 let menu = [];
 let cart = JSON.parse(localStorage.getItem('hungerCart')) || [];
@@ -110,6 +110,8 @@ function updateCartUI() {
   const totalEl = document.getElementById('cartTotal');
   const checkoutBtn = document.getElementById('checkoutBtn');
 
+  if (!countEl || !itemsEl || !totalEl || !checkoutBtn) return;
+
   const totalQty = cart.reduce((sum, i) => sum + i.qty, 0);
   countEl.textContent = totalQty;
 
@@ -123,7 +125,7 @@ function updateCartUI() {
   } else {
     itemsEl.innerHTML = cart.map(item => `
       <div class="cart-item">
-        <img src="\( {item.image || 'https://via.placeholder.com/70'}" alt=" \){item.name}"
+        <img src="${item.image || 'https://via.placeholder.com/70'}" alt="${item.name}"
              onerror="this.src='https://via.placeholder.com/70'">
         <div class="cart-item-info">
           <div class="cart-item-name">${item.name}</div>
@@ -156,75 +158,98 @@ function showToast(msg) {
   setTimeout(() => toast.remove(), 2000);
 }
 
-// Event listeners
+// Global Event listeners setup on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('openCart').addEventListener('click', () => {
-    document.getElementById('cartOverlay').classList.add('open');
-    document.getElementById('cartSidebar').classList.add('open');
-  });
+  const openCartBtn = document.getElementById('openCart');
+  if (openCartBtn) {
+    openCartBtn.addEventListener('click', () => {
+      document.getElementById('cartOverlay').classList.add('open');
+      document.getElementById('cartSidebar').classList.add('open');
+    });
+  }
 
-  document.getElementById('closeCart').addEventListener('click', closeCart);
-  document.getElementById('cartOverlay').addEventListener('click', closeCart);
+  const closeCartBtn = document.getElementById('closeCart');
+  if (closeCartBtn) closeCartBtn.addEventListener('click', closeCart);
 
-  document.getElementById('checkoutBtn').addEventListener('click', () => {
-    closeCart();
-    document.getElementById('checkoutModal').classList.add('open');
-  });
+  const cartOverlay = document.getElementById('cartOverlay');
+  if (cartOverlay) cartOverlay.addEventListener('click', closeCart);
 
-  document.getElementById('checkoutModal').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('checkoutModal')) {
-      document.getElementById('checkoutModal').classList.remove('open');
-    }
-  });
+  const checkoutBtn = document.getElementById('checkoutBtn');
+  if (checkoutBtn) {
+    checkoutBtn.addEventListener('click', () => {
+      closeCart();
+      document.getElementById('checkoutModal').classList.add('open');
+    });
+  }
+
+  const checkoutModal = document.getElementById('checkoutModal');
+  if (checkoutModal) {
+    checkoutModal.addEventListener('click', (e) => {
+      if (e.target === checkoutModal) {
+        checkoutModal.classList.remove('open');
+      }
+    });
+  }
 
   document.querySelectorAll('.cat-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentCategory = btn.dataset.cat;
-      renderMenu(document.getElementById('searchInput').value);
+      const searchInput = document.getElementById('searchInput');
+      renderMenu(searchInput ? searchInput.value : '');
     });
   });
 
-  document.getElementById('searchBtn').addEventListener('click', () => {
-    renderMenu(document.getElementById('searchInput').value);
-  });
+  const searchBtn = document.getElementById('searchBtn');
+  if (searchBtn) {
+    searchBtn.addEventListener('click', () => {
+      const searchInput = document.getElementById('searchInput');
+      renderMenu(searchInput ? searchInput.value : '');
+    });
+  }
 
-  document.getElementById('searchInput').addEventListener('keyup', (e) => {
-    if (e.key === 'Enter') renderMenu(e.target.value);
-  });
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') renderMenu(e.target.value);
+    });
+  }
 
-  document.getElementById('orderForm').addEventListener('submit', (e) => {
-    e.preventDefault();
+  const orderForm = document.getElementById('orderForm');
+  if (orderForm) {
+    orderForm.addEventListener('submit', (e) => {
+      e.preventDefault();
 
-    const order = {
-      id: Date.now(),
-      customer: {
-        name: document.getElementById('customerName').value.trim(),
-        phone: document.getElementById('customerPhone').value.trim(),
-        whatsapp: document.getElementById('customerWhatsapp').value.trim() || document.getElementById('customerPhone').value.trim(),
-        address: document.getElementById('customerAddress').value.trim(),
-        landmark: document.getElementById('customerLandmark').value.trim()
-      },
-      items: cart,
-      total: getCartTotal(),
-      coupon: document.getElementById('couponCode').value.trim(),
-      time: new Date().toLocaleString('en-NP')
-    };
+      const order = {
+        id: Date.now(),
+        customer: {
+          name: document.getElementById('customerName').value.trim(),
+          phone: document.getElementById('customerPhone').value.trim(),
+          whatsapp: document.getElementById('customerWhatsapp').value.trim() || document.getElementById('customerPhone').value.trim(),
+          address: document.getElementById('customerAddress').value.trim(),
+          landmark: document.getElementById('customerLandmark') ? document.getElementById('customerLandmark').value.trim() : ''
+        },
+        items: cart,
+        total: getCartTotal(),
+        coupon: document.getElementById('couponCode') ? document.getElementById('couponCode').value.trim() : '',
+        time: new Date().toLocaleString('en-NP')
+      };
 
-    const orders = JSON.parse(localStorage.getItem('hungerOrders') || '[]');
-    orders.push(order);
-    localStorage.setItem('hungerOrders', JSON.stringify(orders));
+      const orders = JSON.parse(localStorage.getItem('hungerOrders') || '[]');
+      orders.push(order);
+      localStorage.setItem('hungerOrders', JSON.stringify(orders));
 
-    cart = [];
-    saveCart();
-    updateCartUI();
+      cart = [];
+      saveCart();
+      updateCartUI();
 
-    document.getElementById('checkoutModal').classList.remove('open');
-    document.getElementById('orderForm').reset();
+      if (checkoutModal) checkoutModal.classList.remove('open');
+      orderForm.reset();
 
-    alert('✅ Order placed successfully!\n\nOrder ID: ' + order.id + '\nTotal: ₨ ' + order.total + '\n\nWe will contact you soon.');
-  });
+      alert('✅ Order placed successfully!\n\nOrder ID: ' + order.id + '\nTotal: ₨ ' + order.total + '\n\nWe will contact you soon.');
+    });
+  }
 
   // Start
   loadMenu();
@@ -232,10 +257,13 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function closeCart() {
-  document.getElementById('cartOverlay').classList.remove('open');
-  document.getElementById('cartSidebar').classList.remove('open');
-                               }
+  const cartOverlay = document.getElementById('cartOverlay');
+  const cartSidebar = document.getElementById('cartSidebar');
+  if (cartOverlay) cartOverlay.classList.remove('open');
+  if (cartSidebar) cartSidebar.classList.remove('open');
+}
 
+// ===== Google Maps & Landmark Feature =====
 let deliveryMap;
 let deliveryMarker;
 let addressAutocomplete;
@@ -262,21 +290,52 @@ function initDeliveryMap() {
     draggable: true
   });
 
-  function saveLocation(place, position) {
-    document.getElementById("deliveryLat").value = position.lat();
-    document.getElementById("deliveryLng").value = position.lng();
+  function saveLocationByLandmark(position) {
+    const latInput = document.getElementById("deliveryLat");
+    const lngInput = document.getElementById("deliveryLng");
+    if (latInput) latInput.value = position.lat();
+    if (lngInput) lngInput.value = position.lng();
 
     deliveryMarker.setPosition(position);
     deliveryMap.panTo(position);
 
-    if (place) {
-      addressInput.value = place;
-    }
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ location: position }, (results, status) => {
+      if (status === "OK" && results && results.length > 0) {
+        let landmark = "";
+        
+        // Scan address components for points of interest or establishments
+        for (let result of results) {
+          for (let component of result.address_components) {
+            if (
+              component.types.includes("point_of_interest") || 
+              component.types.includes("establishment") ||
+              component.types.includes("premise") ||
+              component.types.includes("sublocality_level_1")
+            ) {
+              landmark = component.long_name;
+              break;
+            }
+          }
+          if (landmark) break;
+        }
 
-    message.textContent = "Location selected successfully.";
+        // Fallback to first address component if no explicit POI type is found
+        if (!landmark && results[0].address_components.length > 0) {
+          landmark = results[0].address_components[0].long_name;
+        }
 
-    // Update coordinates when the customer moves the marker.
-    deliveryMarker.setDraggable(true);
+        const finalAddressValue = landmark ? `Near ${landmark}` : results[0].formatted_address;
+        
+        addressInput.value = finalAddressValue;
+        addressInput.dispatchEvent(new Event('input', { bubbles: true }));
+        addressInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+        if (message) message.textContent = "Nearest landmark selected successfully.";
+      } else {
+        if (message) message.textContent = "Coordinates saved, but landmark lookup failed.";
+      }
+    });
   }
 
   addressAutocomplete = new google.maps.places.Autocomplete(
@@ -291,175 +350,57 @@ function initDeliveryMap() {
     const place = addressAutocomplete.getPlace();
 
     if (!place.geometry || !place.geometry.location) {
-      message.textContent =
-        "Please select an address from the suggestions.";
+      if (message) message.textContent = "Please select an address from the suggestions.";
       return;
     }
 
     const position = place.geometry.location;
+    const latInput = document.getElementById("deliveryLat");
+    const lngInput = document.getElementById("deliveryLng");
+    if (latInput) latInput.value = position.lat();
+    if (lngInput) lngInput.value = position.lng();
 
-    saveLocation(
-      place.formatted_address || place.name || addressInput.value,
-      position
-    );
-
+    deliveryMarker.setPosition(position);
+    deliveryMap.panTo(position);
     deliveryMap.setZoom(16);
+
+    addressInput.value = place.formatted_address || place.name || addressInput.value;
+    if (message) message.textContent = "Location selected successfully.";
   });
 
   deliveryMarker.addListener("dragend", () => {
     const position = deliveryMarker.getPosition();
-
-    document.getElementById("deliveryLat").value = position.lat();
-    document.getElementById("deliveryLng").value = position.lng();
-
-    const geocoder = new google.maps.Geocoder();
-
-    geocoder.geocode({ location: position }, (results, status) => {
-      if (status === "OK" && results[0]) {
-        addressInput.value = results[0].formatted_address;
-        message.textContent = "Pin location updated.";
-      } else {
-        message.textContent =
-          "Pin coordinates saved. Address lookup was unavailable.";
-      }
-    });
+    saveLocationByLandmark(position);
   });
 
-  document.getElementById("useMyLocation")
-    .addEventListener("click", () => {
+  const useMyLocationBtn = document.getElementById("useMyLocation");
+  if (useMyLocationBtn) {
+    useMyLocationBtn.addEventListener("click", () => {
       if (!navigator.geolocation) {
-        message.textContent =
-          "Your browser does not support location access.";
+        if (message) message.textContent = "Your browser does not support location access.";
         return;
       }
 
-      message.textContent = "Finding your location...";
+      if (message) message.textContent = "Finding your current location...";
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const point = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
+          const point = new google.maps.LatLng(
+            position.coords.latitude,
+            position.coords.longitude
+          );
 
           deliveryMap.setCenter(point);
           deliveryMap.setZoom(17);
 
-          saveLocation(
-            addressInput.value,
-            new google.maps.LatLng(point.lat, point.lng)
-          );
-
-          new google.maps.Geocoder().geocode(
-            { location: point },
-            (results, status) => {
-              if (status === "OK" && results[0]) {
-                addressInput.value = results[0].formatted_address;
-                message.textContent =
-                  "Your current location has been selected.";
-              }
-            }
-          );
+          // Automatically extract and fill the nearest landmark
+          saveLocationByLandmark(point);
         },
         () => {
-          message.textContent =
-            "Location unavailable. Allow location permission or search manually.";
+          if (message) message.textContent = "Location unavailable. Allow location permission or search manually.";
         },
-        { enableHighAccuracy: true, timeout: 12000 }
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
       );
     });
-}
-
-// Keep the existing form submission code in your app.js.
-// --- Chillmandu Location & Landmark Handler ---
-
-document.addEventListener('DOMContentLoaded', () => {
-  // Finds the "Use My Current Location" button dynamically based on text or common selectors
-  const useLocationBtn = Array.from(document.querySelectorAll('button, div, span'))
-    .find(el => el.textContent.includes('Use My Current Location'));
-
-  if (useLocationBtn) {
-    useLocationBtn.addEventListener('click', () => {
-      const statusElement = document.querySelector('.finding-location, p, span');
-      if (statusElement) statusElement.textContent = "Finding your current location...";
-
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            
-            // Fetch nearest landmark using Google Maps Geocoder
-            findNearestLandmark(lat, lng, statusElement);
-          },
-          (error) => {
-            console.error("Geolocation error:", error);
-            if (statusElement) statusElement.textContent = "Unable to retrieve your location.";
-          },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-      } else {
-        alert("Geolocation is not supported by your browser.");
-      }
-    });
   }
-});
-
-function findNearestLandmark(lat, lng, statusElement) {
-  if (typeof google === 'undefined' || !google.maps) {
-    console.error("Google Maps API is not loaded yet.");
-    if (statusElement) statusElement.textContent = "Maps API error.";
-    return;
-  }
-
-  const latlng = { lat: parseFloat(lat), lng: parseFloat(lng) };
-  const geocoder = new google.maps.Geocoder();
-
-  geocoder.geocode({ location: latlng }, (results, status) => {
-    if (status === "OK" && results && results.length > 0) {
-      let landmark = "";
-      let formattedAddress = results[0].formatted_address;
-
-      // Search through address components to find a landmark, establishment, or premise
-      for (let result of results) {
-        for (let component of result.address_components) {
-          if (
-            component.types.includes("point_of_interest") || 
-            component.types.includes("establishment") ||
-            component.types.includes("premise") ||
-            component.types.includes("sublocality_level_1")
-          ) {
-            landmark = component.long_name;
-            break;
-          }
-        }
-        if (landmark) break;
-      }
-
-      // Fallback to the first subcomponent if no explicit POI type is found
-      if (!landmark && results[0].address_components.length > 0) {
-        landmark = results[0].address_components[0].long_name;
-      }
-
-      // Format string to emphasize the landmark
-      const finalAddressValue = landmark ? `Near ${landmark}` : formattedAddress;
-
-      // Target your Delivery Address input field and update its value
-      const addressInput = document.querySelector('input[name*="address"], input[id*="address"], input[placeholder*="area"], input[placeholder*="street"]');
-      
-      if (addressInput) {
-        addressInput.value = finalAddressValue;
-        // Dispatch an input event so that frontend listeners pick up the change
-        addressInput.dispatchEvent(new Event('input', { bubbles: true }));
-        addressInput.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-
-      if (statusElement) {
-        statusElement.textContent = "Nearest landmark updated!";
-        setTimeout(() => { statusElement.textContent = ""; }, 3000);
-      }
-    } else {
-      if (statusElement) statusElement.textContent = "Could not find a landmark nearby.";
-    }
-  });
 }
