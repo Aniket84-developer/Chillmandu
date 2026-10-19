@@ -1,4 +1,4 @@
-// ===== Hunger End Pro – Main App Logic (Unified & Fixed) =====
+// ===== Hunger End Pro – Main App Logic (Final Fix) =====
 
 let menu = [];
 let cart = JSON.parse(localStorage.getItem('hungerCart')) || [];
@@ -178,7 +178,15 @@ document.addEventListener('DOMContentLoaded', function() {
   if (checkoutBtn) {
     checkoutBtn.addEventListener('click', () => {
       closeCart();
-      document.getElementById('checkoutModal').classList.add('open');
+      const modal = document.getElementById('checkoutModal');
+      if (modal) modal.classList.add('open');
+      
+      // Initialize map the moment checkout opens so it renders correctly
+      setTimeout(() => {
+        if (typeof initDeliveryMap === 'function') {
+          initDeliveryMap();
+        }
+      }, 200);
     });
   }
 
@@ -267,6 +275,7 @@ function closeCart() {
 let deliveryMap;
 let deliveryMarker;
 let addressAutocomplete;
+let mapInitialized = false;
 
 function initDeliveryMap() {
   const addressInput = document.getElementById("deliveryAddress");
@@ -274,6 +283,12 @@ function initDeliveryMap() {
   const message = document.getElementById("locationMessage");
 
   if (!addressInput || !mapElement) return;
+
+  // Prevent re-initializing if already loaded
+  if (mapInitialized && deliveryMap) {
+    google.maps.event.trigger(deliveryMap, "resize");
+    return;
+  }
 
   const kathmandu = { lat: 27.7172, lng: 85.3240 };
 
@@ -290,6 +305,8 @@ function initDeliveryMap() {
     draggable: true
   });
 
+  mapInitialized = true;
+
   function saveLocationByLandmark(position) {
     const latInput = document.getElementById("deliveryLat");
     const lngInput = document.getElementById("deliveryLng");
@@ -304,7 +321,6 @@ function initDeliveryMap() {
       if (status === "OK" && results && results.length > 0) {
         let landmark = "";
         
-        // Scan address components for points of interest or establishments
         for (let result of results) {
           for (let component of result.address_components) {
             if (
@@ -320,7 +336,6 @@ function initDeliveryMap() {
           if (landmark) break;
         }
 
-        // Fallback to first address component if no explicit POI type is found
         if (!landmark && results[0].address_components.length > 0) {
           landmark = results[0].address_components[0].long_name;
         }
@@ -374,7 +389,8 @@ function initDeliveryMap() {
   });
 
   const useMyLocationBtn = document.getElementById("useMyLocation");
-  if (useMyLocationBtn) {
+  if (useMyLocationBtn && !useMyLocationBtn.dataset.listenerAttached) {
+    useMyLocationBtn.dataset.listenerAttached = "true";
     useMyLocationBtn.addEventListener("click", () => {
       if (!navigator.geolocation) {
         if (message) message.textContent = "Your browser does not support location access.";
