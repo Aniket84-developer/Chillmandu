@@ -674,36 +674,3 @@ body {
   display: block;
   margin-bottom: 12px;
 }
-
-#deliveryAddress {
-  width: 100%;
-  padding: 15px;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
-  font-size: 16px;
-  box-sizing: border-box;
-  background: #fff;
-  color: #1f2937;
-}
-
-#deliveryMap {
-  overflow: hidden;
-  border: 1px solid #e5e7eb;
-}
-
-#useMyLocation {
-  margin-top: 12px;
-  padding: 12px 16px;
-  background: #15803d;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 15px;
-  cursor: pointer;
-}
-
-#locationMessage {
-  font-size: 14px;
-  margin-top: 8px;
-}
-  
