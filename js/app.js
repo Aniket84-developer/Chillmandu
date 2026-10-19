@@ -371,3 +371,95 @@ function initDeliveryMap() {
 }
 
 // Keep the existing form submission code in your app.js.
+// --- Chillmandu Location & Landmark Handler ---
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Finds the "Use My Current Location" button dynamically based on text or common selectors
+  const useLocationBtn = Array.from(document.querySelectorAll('button, div, span'))
+    .find(el => el.textContent.includes('Use My Current Location'));
+
+  if (useLocationBtn) {
+    useLocationBtn.addEventListener('click', () => {
+      const statusElement = document.querySelector('.finding-location, p, span');
+      if (statusElement) statusElement.textContent = "Finding your current location...";
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            // Fetch nearest landmark using Google Maps Geocoder
+            findNearestLandmark(lat, lng, statusElement);
+          },
+          (error) => {
+            console.error("Geolocation error:", error);
+            if (statusElement) statusElement.textContent = "Unable to retrieve your location.";
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+      } else {
+        alert("Geolocation is not supported by your browser.");
+      }
+    });
+  }
+});
+
+function findNearestLandmark(lat, lng, statusElement) {
+  if (typeof google === 'undefined' || !google.maps) {
+    console.error("Google Maps API is not loaded yet.");
+    if (statusElement) statusElement.textContent = "Maps API error.";
+    return;
+  }
+
+  const latlng = { lat: parseFloat(lat), lng: parseFloat(lng) };
+  const geocoder = new google.maps.Geocoder();
+
+  geocoder.geocode({ location: latlng }, (results, status) => {
+    if (status === "OK" && results && results.length > 0) {
+      let landmark = "";
+      let formattedAddress = results[0].formatted_address;
+
+      // Search through address components to find a landmark, establishment, or premise
+      for (let result of results) {
+        for (let component of result.address_components) {
+          if (
+            component.types.includes("point_of_interest") || 
+            component.types.includes("establishment") ||
+            component.types.includes("premise") ||
+            component.types.includes("sublocality_level_1")
+          ) {
+            landmark = component.long_name;
+            break;
+          }
+        }
+        if (landmark) break;
+      }
+
+      // Fallback to the first subcomponent if no explicit POI type is found
+      if (!landmark && results[0].address_components.length > 0) {
+        landmark = results[0].address_components[0].long_name;
+      }
+
+      // Format string to emphasize the landmark
+      const finalAddressValue = landmark ? `Near ${landmark}` : formattedAddress;
+
+      // Target your Delivery Address input field and update its value
+      const addressInput = document.querySelector('input[name*="address"], input[id*="address"], input[placeholder*="area"], input[placeholder*="street"]');
+      
+      if (addressInput) {
+        addressInput.value = finalAddressValue;
+        // Dispatch an input event so that frontend listeners pick up the change
+        addressInput.dispatchEvent(new Event('input', { bubbles: true }));
+        addressInput.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+
+      if (statusElement) {
+        statusElement.textContent = "Nearest landmark updated!";
+        setTimeout(() => { statusElement.textContent = ""; }, 3000);
+      }
+    } else {
+      if (statusElement) statusElement.textContent = "Could not find a landmark nearby.";
+    }
+  });
+}
