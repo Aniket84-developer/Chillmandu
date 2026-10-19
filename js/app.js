@@ -235,3 +235,139 @@ function closeCart() {
   document.getElementById('cartOverlay').classList.remove('open');
   document.getElementById('cartSidebar').classList.remove('open');
 }
+
+let deliveryMap;
+let deliveryMarker;
+let addressAutocomplete;
+
+function initDeliveryMap() {
+  const addressInput = document.getElementById("deliveryAddress");
+  const mapElement = document.getElementById("deliveryMap");
+  const message = document.getElementById("locationMessage");
+
+  if (!addressInput || !mapElement) return;
+
+  const kathmandu = { lat: 27.7172, lng: 85.3240 };
+
+  deliveryMap = new google.maps.Map(mapElement, {
+    center: kathmandu,
+    zoom: 13,
+    mapTypeControl: false,
+    streetViewControl: false
+  });
+
+  deliveryMarker = new google.maps.Marker({
+    map: deliveryMap,
+    position: kathmandu,
+    draggable: true
+  });
+
+  function saveLocation(place, position) {
+    document.getElementById("deliveryLat").value = position.lat();
+    document.getElementById("deliveryLng").value = position.lng();
+
+    deliveryMarker.setPosition(position);
+    deliveryMap.panTo(position);
+
+    if (place) {
+      addressInput.value = place;
+    }
+
+    message.textContent = "Location selected successfully.";
+
+    // Update coordinates when the customer moves the marker.
+    deliveryMarker.setDraggable(true);
+  }
+
+  addressAutocomplete = new google.maps.places.Autocomplete(
+    addressInput,
+    {
+      fields: ["formatted_address", "geometry", "name"],
+      componentRestrictions: { country: "np" }
+    }
+  );
+
+  addressAutocomplete.addListener("place_changed", () => {
+    const place = addressAutocomplete.getPlace();
+
+    if (!place.geometry || !place.geometry.location) {
+      message.textContent =
+        "Please select an address from the suggestions.";
+      return;
+    }
+
+    const position = place.geometry.location;
+
+    saveLocation(
+      place.formatted_address || place.name || addressInput.value,
+      position
+    );
+
+    deliveryMap.setZoom(16);
+  });
+
+  deliveryMarker.addListener("dragend", () => {
+    const position = deliveryMarker.getPosition();
+
+    document.getElementById("deliveryLat").value = position.lat();
+    document.getElementById("deliveryLng").value = position.lng();
+
+    const geocoder = new google.maps.Geocoder();
+
+    geocoder.geocode({ location: position }, (results, status) => {
+      if (status === "OK" && results[0]) {
+        addressInput.value = results[0].formatted_address;
+        message.textContent = "Pin location updated.";
+      } else {
+        message.textContent =
+          "Pin coordinates saved. Address lookup was unavailable.";
+      }
+    });
+  });
+
+  document.getElementById("useMyLocation")
+    .addEventListener("click", () => {
+      if (!navigator.geolocation) {
+        message.textContent =
+          "Your browser does not support location access.";
+        return;
+      }
+
+      message.textContent = "Finding your location...";
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const point = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+
+          deliveryMap.setCenter(point);
+          deliveryMap.setZoom(17);
+
+          saveLocation(
+            addressInput.value,
+            new google.maps.LatLng(point.lat, point.lng)
+          );
+
+          new google.maps.Geocoder().geocode(
+            { location: point },
+            (results, status) => {
+              if (status === "OK" && results[0]) {
+                addressInput.value = results[0].formatted_address;
+                message.textContent =
+                  "Your current location has been selected.";
+              }
+            }
+          );
+        },
+        () => {
+          message.textContent =
+            "Location unavailable. Allow location permission or search manually.";
+        },
+        { enableHighAccuracy: true, timeout: 12000 }
+      );
+    });
+}
+
+// Keep the existing form submission code in your app.js.
